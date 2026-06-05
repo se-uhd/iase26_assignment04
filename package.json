@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "grammar:validate": "ebnf2railroad --lint targets/toml/toml_parser.ebnf --no-target",
+    "grammar:diagram": "ebnf2railroad --title \"TOML Parser Grammar\" --target targets/toml/toml_parser_railroad.html targets/toml/toml_parser.ebnf"
+  },
+  "devDependencies": {
+    "ebnf2railroad": "1.14.2"
+  }
+}

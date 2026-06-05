@@ -1,0 +1,62 @@
+name: Fuzz toml_parser
+
+# Runs the fuzzer on Linux, macOS, and Windows and uploads any crash files. The fuzzing steps are
+# allowed to fail because the assignment starts with TODO stubs; setup failures still fail the job.
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: jdx/mise-action@v4
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Validate the EBNF grammar
+        run: npm run grammar:validate
+
+      - name: Make Unix parser binaries executable
+        run: chmod +x targets/toml/bin/toml_parser_linux_x86_64 targets/toml/bin/toml_parser_mac_universal 2>/dev/null || true
+
+      - name: Mutational fuzzing
+        continue-on-error: true
+        run: gradle run --args="--mode mutational --time-limit 60000 --output-dir output/mutational"
+
+      - name: Grammar-based fuzzing
+        continue-on-error: true
+        run: gradle run --args="--mode grammar --grammar-recursive-depth 300 --grammar-recursion-strategy linear --time-limit 30000 --output-dir output/grammar"
+
+      - name: Crashes found
+        if: always()
+        run: |
+          for d in output/mutational/crashes output/grammar/crashes; do
+            echo "== $d =="
+            if [ -d "$d" ] && [ -n "$(ls -A "$d")" ]; then ls -1 "$d"; else echo "(none)"; fi
+          done
+
+      - name: Upload crashes
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: crashes-${{ matrix.os }}
+          path: output/*/crashes/
+          if-no-files-found: ignore

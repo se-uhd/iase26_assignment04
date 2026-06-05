@@ -1,0 +1,28 @@
+# Describes the fuzz target. The fuzzer itself is target-blind; everything specific to toml_parser
+# lives here. Paths are relative to the directory the fuzzer runs from (the repository root).
+# All fields except expectedExitCodes are required; expectedExitCodes defaults to [0, 1].
+name: toml_parser
+
+# The committed binary for each OS; the fuzzer picks the one matching the host.
+binaries:
+  linux: targets/toml/bin/toml_parser_linux_x86_64
+  mac: targets/toml/bin/toml_parser_mac_universal
+  windows: targets/toml/bin/toml_parser_win_x86_64.exe
+
+# EBNF grammar for grammar mode.
+grammar: targets/toml/toml_parser.ebnf
+
+# Directory of seed documents for mutational mode (files named invalid* are skipped).
+seeds: targets/toml/seeds
+
+# Characters random and mutational generation draw from: letters, digits, and the target's
+# structural characters (quote, brackets, comma, equals, percent, space, newline).
+alphabet: "abcdefghijklmnopqrstuvwxyz0123456789\"[],=% \n"
+
+# Exit codes that count as a normal (non-crash) run; any other code is treated as a crash.
+expectedExitCodes: [0, 1]
+
+# Human-readable names for specific exit codes, shown in the run summary (others appear as exit<code>).
+exitCodeLabels:
+  0: accepted
+  1: rejected

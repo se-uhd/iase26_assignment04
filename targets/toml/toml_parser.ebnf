@@ -1,0 +1,39 @@
+(*
+   Grammar of the input accepted by toml_parser.
+
+   This is the full valid input language: top-level key = value lines whose
+   values are quoted strings or arrays, and arrays may contain further arrays.
+   The parser accepts exactly this language and nothing more.
+
+   "Accepted" does not mean the parser always exits cleanly. A document that is
+   valid by this grammar can still crash the parser if it crosses one of the
+   planted bug thresholds. Finding inputs that do is the exercise.
+
+   Notation: ISO/IEC 14977 EBNF.
+     =  definition    ,  concatenation   |  alternation
+     {} zero or more  [] optional        () grouping
+     "x" or 'x' terminal
+
+   Terminals may use the escapes \n \r \t \\ \" \' (C style).
+*)
+
+document  = [ padding ] , [ keyvalue , { separator , keyvalue } , [ padding ] ] ;
+separator = padding ;
+padding   = ( " " | newline ) , { " " | newline } ;
+keyvalue  = key , "=" , value ;
+
+value     = basicstring | array ;
+array     = "[" , blanks , [ value , { blanks , "," , blanks , value } ] , blanks , "]" ;
+
+key       = keychar , { keychar } ;
+keychar   = letter | digit | "%" ;
+
+basicstring = '"' , { stringchar } , '"' ;
+stringchar  = letter | digit | " " ;
+
+blanks    = { " " } ;
+newline   = "\n" | ( "\r" , "\n" ) ;
+
+letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
+       | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" ;
+digit  = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;

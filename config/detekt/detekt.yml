@@ -1,0 +1,27 @@
+# Detekt runs the ktlint formatting wrapper for both the reference and student repos. Reference-only
+# gates such as coverage, mutation testing, and Markdown linting are configured in build.gradle.kts.
+comments:
+  active: false
+complexity:
+  active: false
+coroutines:
+  active: false
+empty-blocks:
+  active: false
+exceptions:
+  active: false
+naming:
+  active: false
+performance:
+  active: false
+potential-bugs:
+  active: false
+style:
+  active: false
+
+# The ktlint wrapper does not read .editorconfig's trailing-comma setting.
+ktlint:
+  TrailingCommaOnDeclarationSite:
+    useTrailingCommaOnDeclarationSite: false
+  TrailingCommaOnCallSite:
+    useTrailingCommaOnCallSite: false

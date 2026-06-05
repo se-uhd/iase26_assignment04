@@ -1,0 +1,25 @@
+# Gradle / Kotlin build output
+.gradle/
+build/
+.kotlin/
+
+# Gradle is provisioned via mise, not a wrapper; ignore IDE-generated wrapper files.
+gradlew
+gradlew.bat
+gradle/wrapper/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Crash corpus produced by local fuzzing runs (regenerate by running the fuzzer)
+output/
+
+# Node package installs
+node_modules/
+
+# OS / editor
+.DS_Store
+
+# Claude Code workflow scratch artifacts
+.claude-*
