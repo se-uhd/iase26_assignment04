@@ -9,5 +9,6 @@ package de.seuhd.ktfuzzer.engine
 internal enum class StopReason(val code: String, val summaryText: String) {
     MAX_EXECUTIONS("max-executions", "max executions"),
     TIME_LIMIT("time-limit", "time limit"),
-    FIRST_CRASH("first-crash", "first crash")
+    FIRST_CRASH("first-crash", "first crash"),
+    LAUNCH_FAILURES("launch-failures", "repeated launch failures")
 }

@@ -1,0 +1,34 @@
+# Single source of truth for the versions shared across the root build, the build-logic convention
+# plugin, and the detekt-rules build. Each included build imports this file from its own
+# settings.gradle.kts, so a bump here updates every build at once and Dependabot's gradle ecosystem
+# can see it (the same versions were previously string literals inside FuzzerCommonPlugin.kt).
+[versions]
+kotlin = "2.3.21"
+detekt = "2.0.0-alpha.3"
+kotlinxSerialization = "1.11.0"
+kotlinxCoroutines = "1.11.0"
+kaml = "0.104.0"
+kotest = "6.1.11"
+kover = "0.9.8"
+pitestPlugin = "1.19.0"
+pitest = "1.25.1"
+pitestJunit5 = "1.2.3"
+
+[libraries]
+kaml = { module = "com.charleskorn.kaml:kaml", version.ref = "kaml" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
+detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
+detekt-gradle-plugin = { module = "dev.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
+kotlin-jvm-gradle-plugin = { module = "org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin" }
+kotlin-serialization-gradle-plugin = { module = "org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "kotlin" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+pitest = { id = "info.solidsoft.pitest", version.ref = "pitestPlugin" }

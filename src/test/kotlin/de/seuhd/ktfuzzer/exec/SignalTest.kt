@@ -17,4 +17,9 @@ class SignalTest {
         assertEquals("exit 130", Signal.labelFor(130))
         assertEquals("exit 2", Signal.labelFor(2))
     }
+
+    @Test
+    fun `exit 138 stays numeric because SIGBUS numbering differs between Linux and macOS`() {
+        assertEquals("exit 138", Signal.labelFor(138))
+    }
 }

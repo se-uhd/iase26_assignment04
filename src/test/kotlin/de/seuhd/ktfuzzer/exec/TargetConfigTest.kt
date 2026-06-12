@@ -140,6 +140,11 @@ class TargetConfigTest {
     }
 
     @Test
+    fun `a directory instead of a config file is a failure, not an exception`(@TempDir dir: Path) {
+        assertTrue(TargetConfig.load(dir).isFailure)
+    }
+
+    @Test
     fun `malformed YAML is a failure, not an exception`(@TempDir dir: Path) {
         assertTrue(load(dir, "expectedExitCodes: not-a-list\n").isFailure)
     }

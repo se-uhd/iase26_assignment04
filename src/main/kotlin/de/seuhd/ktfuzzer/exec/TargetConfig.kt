@@ -3,6 +3,7 @@ package de.seuhd.ktfuzzer.exec
 import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.reflect.KProperty
@@ -72,12 +73,12 @@ internal data class TargetConfig(
 
         /**
          * Loads and parses the YAML target config at [path]. Returns [Result.success] with the parsed
-         * config, or [Result.failure] with a one-line message if the file cannot be read or its
-         * contents are not valid YAML.
+         * config, or [Result.failure] with a one-line message if the path is not a readable file, the
+         * read fails, or the contents are not valid YAML.
          */
         fun load(path: Path): Result<TargetConfig> {
-            if (!Files.isReadable(path)) {
-                return Result.failure(IllegalArgumentException("target config not found: $path"))
+            if (!Files.isRegularFile(path) || !Files.isReadable(path)) {
+                return Result.failure(IllegalArgumentException("target config is not a readable file: $path"))
             }
             return try {
                 Result.success(Yaml.default.decodeFromString(serializer(), Files.readString(path)))
@@ -85,6 +86,8 @@ internal data class TargetConfig(
                 Result.failure(IllegalArgumentException("invalid target config $path: ${e.message}"))
             } catch (e: IllegalArgumentException) {
                 Result.failure(IllegalArgumentException("invalid target config $path: ${e.message}"))
+            } catch (e: IOException) {
+                Result.failure(IllegalArgumentException("cannot read target config $path: ${e.message}"))
             }
         }
     }

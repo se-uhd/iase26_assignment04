@@ -32,6 +32,14 @@ internal class CampaignStats(val startNanos: Long) {
     var errors: Long = 0
         private set
 
+    /** Launch failures since the last execution that started; any started run resets this to 0. */
+    var consecutiveErrors: Long = 0
+        private set
+
+    /** Message of the most recent launch failure, or null when every execution started. */
+    var lastError: String? = null
+        private set
+
     private val expectedExitCounts = LinkedHashMap<Int, Long>()
 
     /** Non-crash runs per exit code. */
@@ -50,6 +58,12 @@ internal class CampaignStats(val startNanos: Long) {
             is ExecResult.Crash -> crashes++
             ExecResult.Timeout -> timeouts++
             is ExecResult.Error -> errors++
+        }
+        if (result is ExecResult.Error) {
+            consecutiveErrors++
+            lastError = result.message
+        } else {
+            consecutiveErrors = 0
         }
     }
 

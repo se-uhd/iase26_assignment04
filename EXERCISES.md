@@ -22,7 +22,9 @@ functions you implement; your goal is zero failures.
 
 Run mutational mode with `--stop-on-crash` (or omit it for longer campaigns) until you have
 crashes with at least two different exit codes; crashing inputs are grouped under
-`output/crashes/exit<code>/`, so the exit code is the directory name.
+`output/crashes/exit<code>/`, so the exit code is the directory name. Crash folders accumulate
+across runs (the fuzzer warns when the directory is not empty); pass a separate `--output-dir`
+per campaign when you want one run's findings in isolation.
 
 ## Exercise 2: grammar-based fuzzer
 

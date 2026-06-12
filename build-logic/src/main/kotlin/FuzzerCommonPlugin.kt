@@ -2,12 +2,14 @@ import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.plugins.JavaApplication
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.add
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.mavenCentral
 import org.gradle.kotlin.dsl.repositories
 import org.gradle.kotlin.dsl.withType
@@ -28,14 +30,17 @@ class FuzzerCommonPlugin : Plugin<Project> {
                 mavenCentral()
             }
 
+            // A plugin class cannot use the generated `libs` accessor, so read the consuming
+            // project's catalog (the root build auto-detects gradle/libs.versions.toml).
+            val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
             dependencies {
-                add("implementation", "com.charleskorn.kaml:kaml:0.104.0")
-                add("implementation", "org.jetbrains.kotlinx:kotlinx-serialization-core:1.11.0")
-                add("implementation", "org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-                add("detektPlugins", "dev.detekt:detekt-rules-ktlint-wrapper:2.0.0-alpha.3")
-                add("testImplementation", "org.jetbrains.kotlin:kotlin-test:2.3.21")
-                add("testImplementation", "io.kotest:kotest-property:6.1.11")
-                add("testImplementation", "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+                add("implementation", libs.findLibrary("kaml").get())
+                add("implementation", libs.findLibrary("kotlinx-serialization-core").get())
+                add("implementation", libs.findLibrary("kotlinx-serialization-json").get())
+                add("detektPlugins", libs.findLibrary("detekt-rules-ktlint-wrapper").get())
+                add("testImplementation", libs.findLibrary("kotlin-test").get())
+                add("testImplementation", libs.findLibrary("kotest-property").get())
+                add("testImplementation", libs.findLibrary("kotlinx-coroutines-core").get())
             }
 
             extensions.configure<KotlinJvmProjectExtension>("kotlin") {
@@ -55,7 +60,7 @@ class FuzzerCommonPlugin : Plugin<Project> {
             }
 
             extensions.configure<DetektExtension>("detekt") {
-                toolVersion.set("2.0.0-alpha.3")
+                toolVersion.set(libs.findVersion("detekt").get().requiredVersion)
                 source.setFrom("src/main/kotlin", "src/test/kotlin")
                 buildUponDefaultConfig.set(true)
                 autoCorrect.set(providers.gradleProperty("detektAutoCorrect").orNull == "true")

@@ -52,4 +52,24 @@ class StopPolicyTest {
             policy.getStopReason(stats(executions = 10), Clock { 100_000_000L })
         )
     }
+
+    @Test
+    fun `repeated launch failures stop the run and take precedence over the execution cap`() {
+        val policy = StopPolicy(maxExecutions = 5, timeLimitMillis = null, stopOnCrash = false)
+        val failing = CampaignStats(0L).apply {
+            repeat(StopPolicy.MAX_CONSECUTIVE_ERRORS.toInt()) { record(ExecResult.Error("spawn failed")) }
+        }
+        assertEquals(StopReason.LAUNCH_FAILURES, policy.getStopReason(failing, frozen))
+    }
+
+    @Test
+    fun `an execution that starts resets the launch-failure count`() {
+        val policy = StopPolicy(maxExecutions = null, timeLimitMillis = null, stopOnCrash = false)
+        val mixed = CampaignStats(0L).apply {
+            repeat(StopPolicy.MAX_CONSECUTIVE_ERRORS.toInt() - 1) { record(ExecResult.Error("spawn failed")) }
+            record(ExecResult.Expected(0))
+            record(ExecResult.Error("spawn failed"))
+        }
+        assertNull(policy.getStopReason(mixed, frozen))
+    }
 }

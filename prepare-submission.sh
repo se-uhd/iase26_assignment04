@@ -77,18 +77,18 @@ fi
 
 rm -f "$OUTPUT"
 
-# Exclude generated build files, IDE files, and Gradle wrapper files.
+# Exclude generated build files, IDE files, Gradle wrapper files, and installed dependencies.
 COPYFILE_DISABLE=1 zip -qr "$OUTPUT" . \
     -x "*/.gradle/*"  -x ".gradle/*" \
     -x "*/.gradle"    -x ".gradle" \
-    -x "*/gradle/*"   -x "gradle/*" \
-    -x "*/gradle"     -x "gradle" \
     -x "*/gradle/wrapper/*" -x "gradle/wrapper/*" \
     -x "*/gradle/wrapper"   -x "gradle/wrapper" \
     -x "*/gradlew"          -x "gradlew" \
     -x "*/gradlew.bat"      -x "gradlew.bat" \
     -x "*/build/*"    -x "build/*" \
     -x "*/build"      -x "build" \
+    -x "*/node_modules/*" -x "node_modules/*" \
+    -x "*/node_modules"   -x "node_modules" \
     -x "*/.idea/*"    -x ".idea/*" \
     -x "*/.idea"      -x ".idea" \
     -x "*.iml"        -x "*/*.iml" \
@@ -96,6 +96,7 @@ COPYFILE_DISABLE=1 zip -qr "$OUTPUT" . \
     -x "*/.kotlin"    -x ".kotlin" \
     -x "*/.vscode/*"  -x ".vscode/*" \
     -x "*/.vscode"    -x ".vscode" \
+    -x ".claude-*"    -x "*/.claude-*" \
     -x "*.zip" \
     -x ".DS_Store" -x "*/.DS_Store"
 

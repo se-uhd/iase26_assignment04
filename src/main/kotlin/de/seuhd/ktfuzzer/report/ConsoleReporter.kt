@@ -41,7 +41,7 @@ internal object ConsoleReporter {
 
     /**
      * End-of-run report: a CRASH FOUND / NO CRASH headline, then an aligned block with the stop
-     * reason, throughput, the per-verdict counts, the crashes-by-exit-code breakdown, and where
+     * reason, throughput, the per-verdict counts, the unique crashes per exit code, and where
      * crashes were saved.
      */
     fun renderSummary(
@@ -73,7 +73,7 @@ internal object ConsoleReporter {
             if (stats.crashWriteFailures > 0) add("not saved" to stats.crashWriteFailures.toString())
         }
         output.println()
-        output.println(headline(stats.crashes))
+        output.println(headline(stats, stopReason))
         printBlock(output, rows)
     }
 
@@ -83,11 +83,15 @@ internal object ConsoleReporter {
         rows.forEach { (key, value) -> output.println("  ${key.padEnd(width)}  $value") }
     }
 
-    /** The headline: a single `CRASH FOUND`, `<n> CRASHES FOUND` for several, or `NO CRASHES FOUND`. */
-    private fun headline(crashes: Long): String = when {
-        crashes == 0L -> "NO CRASHES FOUND"
-        crashes == 1L -> "CRASH FOUND"
-        else -> "$crashes CRASHES FOUND"
+    /**
+     * The headline: `TARGET FAILED TO START` when a crashless campaign gave up on launch failures,
+     * else `CRASH FOUND` / `<n> CRASHES FOUND` / `NO CRASHES FOUND`.
+     */
+    private fun headline(stats: CampaignStats, stopReason: StopReason): String = when {
+        stopReason == StopReason.LAUNCH_FAILURES && stats.crashes == 0L -> "TARGET FAILED TO START"
+        stats.crashes == 0L -> "NO CRASHES FOUND"
+        stats.crashes == 1L -> "CRASH FOUND"
+        else -> "${stats.crashes} CRASHES FOUND"
     }
 
     /** The crash directory with a trailing separator, so it reads as a directory. */

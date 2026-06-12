@@ -10,7 +10,6 @@ internal enum class Signal(val exitCode: Int) {
     SIGTRAP(133),
     SIGABRT(134),
     SIGFPE(136),
-    SIGBUS(138),
     SIGSEGV(139);
 
     companion object {

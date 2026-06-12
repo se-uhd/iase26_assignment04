@@ -64,6 +64,42 @@ class HarnessTest {
     }
 
     @Test
+    fun `stop-on-crash ends the campaign after the first crashing execution`() {
+        val stats = CampaignStats(0L)
+        val reason =
+            Harness(
+                fuzzer = Fuzzer { "x" },
+                target = Target { ExecResult.Crash(CRASH_CODE) },
+                stopPolicy = StopPolicy(maxExecutions = 100, timeLimitMillis = null, stopOnCrash = true),
+                crashSink = RecordingSink(),
+                campaignStats = stats,
+                random = Random(TestFixtures.SEED),
+                clock = Clock { 0L }
+            ).run()
+        assertEquals(StopReason.FIRST_CRASH, reason)
+        assertEquals(1, stats.executions)
+        assertEquals(1, stats.crashes)
+    }
+
+    @Test
+    fun `a target that never starts stops the campaign at the launch-failure cutoff`() {
+        // Without the cutoff this campaign has no bound at all and would loop forever.
+        val stats = CampaignStats(0L)
+        val reason =
+            Harness(
+                fuzzer = Fuzzer { "x" },
+                target = Target { ExecResult.Error("spawn failed") },
+                stopPolicy = StopPolicy(maxExecutions = null, timeLimitMillis = null, stopOnCrash = false),
+                crashSink = RecordingSink(),
+                campaignStats = stats,
+                random = Random(TestFixtures.SEED),
+                clock = Clock { 0L }
+            ).run()
+        assertEquals(StopReason.LAUNCH_FAILURES, reason)
+        assertEquals(StopPolicy.MAX_CONSECUTIVE_ERRORS, stats.executions)
+    }
+
+    @Test
     fun `the same seed produces an identical run`() {
         // The target crashes on longer inputs, so the run is a deterministic mix of crashes and clean
         // runs driven only by the seed.

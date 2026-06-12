@@ -41,9 +41,10 @@ gradle run --args="--mode random --time-limit 30000 --stop-on-crash"
 gradle run --args="--help"
 ```
 
-A fuzzing run exits 0 whether or not it finds crashes; a usage error exits 2. Pass
-`--fail-on-crash` to exit non-zero when at least one crash was found (for a CI gate). The same
-`--random-seed` makes the fuzzer choose the same sequence of inputs.
+A fuzzing run exits 0 whether or not it finds crashes; a usage error exits 2, and a campaign
+whose target repeatedly fails to start exits 3. Pass `--fail-on-crash` to exit non-zero when at
+least one crash was found (for a CI gate). The same `--random-seed` makes the fuzzer choose the
+same sequence of inputs.
 
 ### Flags
 

@@ -51,7 +51,7 @@ class CampaignSummaryJsonTest {
             setOf(
                 "mode", "seed", "target", "stop", "executions", "elapsedMs", "executionsPerSecond",
                 "expected", "crashed", "uniqueCrashes", "crashWriteFailures", "timeouts", "errors",
-                "crashDir", "crashExitCodes"
+                "crashDir", "uniqueCrashExitCodes"
             ),
             root.keys
         )
@@ -63,8 +63,8 @@ class CampaignSummaryJsonTest {
         assertEquals(1, expected.getValue("accepted").jsonPrimitive.long)
         assertEquals(1, expected.getValue("rejected").jsonPrimitive.long)
 
-        val crashExitCodes = root.getValue("crashExitCodes").jsonObject
-        assertEquals(2, crashExitCodes.getValue("SIGSEGV").jsonPrimitive.long)
-        assertEquals(1, crashExitCodes.getValue("SIGABRT").jsonPrimitive.long)
+        val uniqueCrashExitCodes = root.getValue("uniqueCrashExitCodes").jsonObject
+        assertEquals(2, uniqueCrashExitCodes.getValue("SIGSEGV").jsonPrimitive.long)
+        assertEquals(1, uniqueCrashExitCodes.getValue("SIGABRT").jsonPrimitive.long)
     }
 }

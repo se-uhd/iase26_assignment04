@@ -6,6 +6,7 @@ import de.seuhd.ktfuzzer.exec.Target
 import de.seuhd.ktfuzzer.mode.Fuzzer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -35,6 +36,7 @@ class MainCliTest {
     private fun run(
         args: List<String>,
         target: TargetFactory = okTarget,
+        fuzzer: FuzzerFactory = constFuzzer,
         checkBinary: Boolean = false
     ): Pair<Int, Streams> {
         val s = Streams()
@@ -43,7 +45,7 @@ class MainCliTest {
                 args,
                 env = Environment(s.stdout, s.stderr),
                 targetFactory = target,
-                fuzzerFactory = constFuzzer,
+                fuzzerFactory = fuzzer,
                 checkBinary = checkBinary
             )
         return code to s
@@ -179,5 +181,52 @@ class MainCliTest {
             )
         assertEquals(CliResult.USAGE_ERROR, code)
         assertTrue(s.stderrBuffer.size() > 0, "the unreadable-seeds error should be written to stderr")
+    }
+
+    @Test
+    fun `a directory as the target config is a usage error, not a stack trace`(@TempDir dir: Path) {
+        val (code, s) = run(listOf("--target", dir.toString()))
+        assertEquals(CliResult.USAGE_ERROR, code)
+        assertTrue(s.stderrBuffer.size() > 0, "the config error should be written to stderr")
+    }
+
+    @Test
+    fun `a fuzzer setup failure is a usage error, not a stack trace`(@TempDir dir: Path) {
+        val failing = FuzzerFactory { _, _ -> throw IllegalArgumentException("no usable seeds in seeds") }
+        val (code, s) = run(listOf("--output-dir", dir.toString()), fuzzer = failing)
+        assertEquals(CliResult.USAGE_ERROR, code)
+        assertTrue("no usable seeds" in s.stderrBuffer.toString(), "the setup error should be written to stderr")
+    }
+
+    @Test
+    fun `a binary without the executable bit is a usage error`(@TempDir dir: Path) {
+        assumeFalse(
+            System.getProperty("os.name").lowercase().contains("windows"),
+            "the executable bit is Unix-only"
+        )
+        val binary = dir.resolve("target-binary")
+        Files.writeString(binary, "#!/bin/sh\nexit 0\n")
+        val args = targetArgs(dir, validTargetYaml(dir, binary = binary))
+        val (code, s) = run(args, checkBinary = true)
+        assertEquals(CliResult.USAGE_ERROR, code)
+        assertTrue("not executable" in s.stderrBuffer.toString(), "the error should name the missing exec bit")
+    }
+
+    @Test
+    fun `a target that never starts exits with the start-failure code and stops early`(@TempDir dir: Path) {
+        val brokenTarget = TargetFactory { _, _ -> Target { ExecResult.Error("spawn failed") } }
+        val (code, s) =
+            run(listOf("--max-executions", "1000", "--output-dir", dir.toString()), target = brokenTarget)
+        assertEquals(3, code, "a campaign that never ran the target must not exit 0")
+        assertTrue("failed to start" in s.stderrBuffer.toString(), "the abort reason should be on stderr")
+    }
+
+    @Test
+    fun `a second run into the same output dir warns about leftover crashes`(@TempDir dir: Path) {
+        val args = listOf("--max-executions", "5", "--output-dir", dir.toString())
+        val (_, first) = run(args, target = crashTarget)
+        assertEquals("", first.stderrBuffer.toString(), "the first run sees an empty crash dir")
+        val (_, second) = run(args, target = crashTarget)
+        assertTrue("warning:" in second.stderrBuffer.toString(), "leftover crash folders should be flagged")
     }
 }

@@ -144,9 +144,11 @@ class CliArgsTest {
     }
 
     @Test
-    fun `a negative time limit is a usage error`() {
+    fun `a non-positive time limit is a usage error`() {
+        // Unlike --max-executions, 0 is not "unbounded": it would stop before the first execution.
         assertEquals(CliResult.USAGE_ERROR, errorCode("--time-limit", "-1"))
-        assertEquals(0L, ok("--time-limit", "0").timeLimitMillis)
+        assertEquals(CliResult.USAGE_ERROR, errorCode("--time-limit", "0"))
+        assertEquals(100L, ok("--time-limit", "100").timeLimitMillis)
     }
 
     @Test
@@ -154,6 +156,20 @@ class CliArgsTest {
         assertEquals(CliResult.USAGE_ERROR, errorCode("--mode"))
         assertEquals(CliResult.USAGE_ERROR, errorCode("--max-executions"))
         assertEquals(CliResult.USAGE_ERROR, errorCode("--target"))
+    }
+
+    @Test
+    fun `a flag directly followed by another flag is missing its value`() {
+        // Without this, `--output-dir --fail-on-crash` creates a directory named
+        // `--fail-on-crash` and silently drops the CI gate.
+        assertEquals(CliResult.USAGE_ERROR, errorCode("--output-dir", "--fail-on-crash"))
+        assertEquals(CliResult.USAGE_ERROR, errorCode("--target", "--stop-on-crash"))
+        assertEquals(CliResult.USAGE_ERROR, errorCode("--max-executions", "--time-limit", "100"))
+    }
+
+    @Test
+    fun `negative numbers still parse as flag values`() {
+        assertEquals(-7L, ok("--random-seed", "-7").randomSeed)
     }
 
     @Test

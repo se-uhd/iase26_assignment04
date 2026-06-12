@@ -29,7 +29,7 @@ internal object CampaignSummaryJson {
             put("timeouts", stats.timeouts)
             put("errors", stats.errors)
             put("crashDir", metadata.crashDir.toString())
-            put("crashExitCodes", crashCounts(stats))
+            put("uniqueCrashExitCodes", crashCounts(stats))
         }.toString()
     }
 

@@ -37,13 +37,15 @@ jobs:
       - name: Make Unix parser binaries executable
         run: chmod +x targets/toml/bin/toml_parser_linux_x86_64 targets/toml/bin/toml_parser_mac_universal 2>/dev/null || true
 
+      # --max-executions 0 lifts the default 10,000-execution cap so the time limit alone governs;
+      # otherwise the step stops well before its time budget.
       - name: Mutational fuzzing
         continue-on-error: true
-        run: gradle run --args="--mode mutational --time-limit 60000 --output-dir output/mutational"
+        run: gradle run --args="--mode mutational --max-executions 0 --time-limit 60000 --output-dir output/mutational"
 
       - name: Grammar-based fuzzing
         continue-on-error: true
-        run: gradle run --args="--mode grammar --grammar-recursive-depth 300 --grammar-recursion-strategy linear --time-limit 30000 --output-dir output/grammar"
+        run: gradle run --args="--mode grammar --grammar-recursive-depth 300 --grammar-recursion-strategy linear --max-executions 0 --time-limit 30000 --output-dir output/grammar"
 
       - name: Crashes found
         if: always()

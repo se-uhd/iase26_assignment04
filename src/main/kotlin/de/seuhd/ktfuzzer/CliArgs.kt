@@ -56,6 +56,18 @@ private inline fun nonNegativeLong(
     return CliResult.Ok(set(config, n))
 }
 
+/** Parses [value] as a positive Long and applies [set], or returns the matching usage error. */
+private inline fun positiveLong(
+    config: FuzzerConfig,
+    flag: String,
+    value: String?,
+    set: (FuzzerConfig, Long) -> FuzzerConfig
+): CliResult {
+    val n = value?.toLongOrNull() ?: return badNumber(flag)
+    if (n <= 0) return usage("flag $flag must be positive")
+    return CliResult.Ok(set(config, n))
+}
+
 /** Static CLI parser data: default values and the flag table, in help-text order. */
 private object CliSpec {
     val defaults = FuzzerConfig()
@@ -97,8 +109,9 @@ private object CliSpec {
         ) { c, f, v ->
             nonNegativeLong(c, f, v) { cc, n -> cc.copy(maxExecutions = if (n <= 0) null else n) }
         },
+        // Reject zero: it would stop the campaign before the first execution.
         Flag(listOf("--time-limit"), "MS", "stop after this many milliseconds of wall-clock time", null) { c, f, v ->
-            nonNegativeLong(c, f, v) { cc, n -> cc.copy(timeLimitMillis = n) }
+            positiveLong(c, f, v) { cc, n -> cc.copy(timeLimitMillis = n) }
         },
         Flag(listOf("--stop-on-crash"), null, "stop at the first crash", null) { c, _, _ ->
             CliResult.Ok(c.copy(stopOnCrash = true))
@@ -154,13 +167,8 @@ private object CliSpec {
             "per-run timeout in milliseconds",
             defaults.runTimeoutMillis.toString()
         ) { c, f, v ->
-            val n = v!!.toLongOrNull()
             // A non-positive limit makes waitFor return at once, force-killing every run as a timeout.
-            when {
-                n == null -> badNumber(f)
-                n <= 0 -> usage("flag $f must be positive")
-                else -> CliResult.Ok(c.copy(runTimeoutMillis = n))
-            }
+            positiveLong(c, f, v) { cc, n -> cc.copy(runTimeoutMillis = n) }
         },
         Flag(listOf("--random-seed"), "LONG", "seed for random choices", defaults.randomSeed.toString()) { c, f, v ->
             v!!.toLongOrNull()?.let { CliResult.Ok(c.copy(randomSeed = it)) } ?: badNumber(f)
@@ -179,7 +187,12 @@ internal fun parseArgs(args: List<String>): CliResult {
             ?: return usage(if (arg.startsWith("-")) "unknown flag '$arg'" else "unexpected argument '$arg'")
         val value: String?
         if (flag.valueLabel != null) {
-            value = args.getOrNull(i + 1) ?: return missing(arg)
+            val next = args.getOrNull(i + 1)
+            // A `--` token is the next flag, not a value: `--output-dir --fail-on-crash` must not
+            // create a directory named `--fail-on-crash` and silently drop the gate. Negative
+            // numbers (single `-`) stay valid values.
+            if (next == null || next.startsWith("--")) return missing(arg)
+            value = next
             i++
         } else {
             value = null
@@ -229,7 +242,9 @@ internal fun printHelp(stream: PrintStream) {
 
         Successful runs write the banner and summary to stdout. The machine-readable campaign
         summary is always written to <output-dir>/campaign-summary.json. Usage errors and
-        file-write warnings go to stderr.
+        file-write warnings go to stderr. Exit codes: 0 for a completed run (1 with
+        --fail-on-crash when crashes were found), 2 for a usage error, 3 when the target
+        repeatedly failed to start.
         """.trimIndent()
     )
 }

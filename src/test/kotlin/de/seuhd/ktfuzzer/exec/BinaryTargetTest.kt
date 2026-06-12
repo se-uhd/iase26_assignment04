@@ -6,6 +6,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class BinaryTargetTest {
     @Test
@@ -53,6 +54,20 @@ class BinaryTargetTest {
 
         assertEquals(ExecResult.Expected(2), acceptsTwo.run(""))
         assertEquals(ExecResult.Crash(1), rejectsOne.run(""))
+    }
+
+    @Test
+    fun `a run that exceeds the timeout is killed and reported as a timeout`(@TempDir dir: Path) {
+        val target = BinaryTarget(script(dir, "sleeper", "sleep 10"), runTimeoutMillis = 200L)
+
+        assertEquals(ExecResult.Timeout, target.run(""))
+    }
+
+    @Test
+    fun `a binary that cannot start is an error, not an exception`(@TempDir dir: Path) {
+        val target = BinaryTarget(dir.resolve("absent-binary"), RUN_TIMEOUT_MILLIS)
+
+        assertTrue(target.run("") is ExecResult.Error, "a missing binary should report ExecResult.Error")
     }
 
     private fun script(dir: Path, name: String, body: String): Path {

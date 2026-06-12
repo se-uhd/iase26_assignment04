@@ -61,4 +61,21 @@ class ConsoleReporterTest {
         assertTrue(outputs.all { it.isNotBlank() }, "each renderer should write something")
         assertTrue(outputs.any { "not saved" in it }, "write failures should be reported")
     }
+
+    @Test
+    fun `a crashless launch-failure stop reports that the target never started`() {
+        val metadata =
+            RunMetadata(
+                "random",
+                randomSeed = 42L,
+                targetName = "toml_parser",
+                crashDir = crashDir,
+                exitCodeLabels = emptyMap()
+            )
+        val stats = statsOf { record(ExecResult.Error("spawn failed")) }
+        val out = capture {
+            ConsoleReporter.renderSummary(it, metadata, stats, StopReason.LAUNCH_FAILURES, nowNanos = 1L)
+        }
+        assertTrue("TARGET FAILED TO START" in out, "headline must not read as a clean no-crash run")
+    }
 }
